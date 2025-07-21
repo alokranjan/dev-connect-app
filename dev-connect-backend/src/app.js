@@ -1,62 +1,58 @@
 const express = require("express");
-
-
 const app = express();
-const { authAdmin } = require("./middlewares/authenticate");
+const { connectDB } = require("./config/database");
+const User = require("./models/user");
 
-//these are request (basically handler here) handler
+app.use(express.json()); //json a another middleware
 
-/*app.use("/",(req,res) =>{
-    res.send("Hello from express server root");
- })
-    // complex routing using wildcard "/ab?c" "/ab*cd"  "/ab+c" "/ab(cd)+ef"  regEx also can be used
-    // dynamic  /user/:userId/:name
-    //wrap in array will also work there are so much variation for routing
- app.use("/test",(req,res) =>{  
-    res.send("Hello from express server root");
-})
-     app.use("/test",(req,res) =>{this route handler
-})
+app.post("/signup", async (req, res) => {
+    console.log(req.body)
+ /*   const userObj = {
+    firstName: "Alok",
+    lastName: "Ranjan",
+    emailId: "alok@gmail.com",
+    password: "alok@1234",
+  }; */ // _id is id  and __v is version created automatically
+  const user = new User(req.body);
+  try {
+    await user.save();
+    res.send("User saved successfully");
+  } catch (err) {
+    res.status(400).send("error saving the user");
+  } 
+});
 
-
-app.use("/",(err,req,res,next) =>{ if 4 1st is treated as err, if 3 param mentioned then 1st will be req
-    res.send("Hello from express server root");
- })
-    */
-
-
-//create a middleware to handle all the request type put, get, patch, post
-//moved to authenticate.js
-/* app.use("/admin", (req, res, next) => {
-  const token = "xyz1";
-  const isAdminAuthorized = token === "xyz";
-  if (isAdminAuthorized) {
-    res.status(401).send("Unautorized request. Please try later");
-  } else {
-    next();
+app.get("/user", async (req, res) => {
+  console.log(req.body);
+  const userEmail = req.body.emailId;
+console.log(User)
+  try {
+    const user = await User.find({ emailId: userEmail });// will compare and return if matched
+    //const user = await User.find({}); it will return all users
+   //const user = await User.findOne({ emailId: userEmail }); 
+    res.send(user);
+  } catch (err) {
+    res.status(400).send("error while getting the user");
   }
-}); */
-app.get("/admin", authAdmin);
-
-app.get("/admin/getdata",authAdmin, (req, res) => {
-  res.send("All admin data sent successfuly");
 });
 
-// (req, res) => {
- // res.send("All admin data sent successfuly");
-//}  complete line called middleware fucntions
+//app.delete(); //homework using findIdAnddelete of moongoose
+// patch vs put     find by and update of moongoose
+// // npm validator
+/* const ALLOWED_UPDATES = ['gender','emailId']
+const isUpdateAllowed = Object.keys(data).every((k) => ALLOWED_UPDATES.includes(k)
+) 
+allow a update based on that or thorw a error;
 
-app.get("/admin/getdataerror",authAdmin, (req, res) => {
-    try{
-throw new Error("eroor new")
-    }
-    catch(error){
-        res.status(500).send("error found")
-    }
-  res.send("All admin data sent successfuly");
-});
+*/;
 
-
-app.listen(3000, () => {
-  console.log("server is listening successfully at 3000.........");
-});
+connectDB()
+  .then(() => {
+    console.log("Dtabase connection established.");
+    app.listen(3000, () => {
+      console.log("server is listening successfully at 3000.........");
+    });
+  })
+  .catch((err) => {
+    console.log("Database cannot be connected");
+  });
